@@ -12,13 +12,6 @@ import li.cil.oc.api.network.Node;
 import li.cil.oc.api.network.*;
 import mekanism.api.gas.Gas;
 import mekanism.api.gas.GasStack;
-import mods.immibis.microblocks.api.EnumPartClass;
-import mods.immibis.microblocks.api.EnumPosition;
-import mods.immibis.microblocks.api.IMicroblockCoverSystem;
-import mods.immibis.microblocks.api.IMicroblockSystem;
-import mods.immibis.microblocks.api.MicroblockAPIUtils;
-import mods.immibis.microblocks.api.Part;
-import mods.immibis.microblocks.api.PartType;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -92,7 +85,6 @@ public class TileConduitBundle extends TileEntityEio implements IConduitBundle {
   
   public TileConduitBundle() {
     this.blockType = EnderIO.blockConduitBundle;
-    initMicroblocks();    
   }
 
   @Override
@@ -126,10 +118,7 @@ public class TileConduitBundle extends TileEntityEio implements IConduitBundle {
     }
     nbtRoot.setInteger("facadeMeta", facadeMeta);
     nbtRoot.setShort("nbtVersion", NBT_VERSION);
-    
-    if (MicroblocksUtil.supportMicroblocks()) {
-      writeMicroblocksToNBT(nbtRoot);
-    }
+
   }
 
   @Override
@@ -165,9 +154,6 @@ public class TileConduitBundle extends TileEntityEio implements IConduitBundle {
       clientUpdated = true;
     }
 
-    if (MicroblocksUtil.supportMicroblocks()) {
-      readMicroblocksFromNBT(nbtRoot);
-    }
   }
 
   @Override
@@ -915,153 +901,6 @@ public class TileConduitBundle extends TileEntityEio implements IConduitBundle {
   @Override
   public boolean displayPower() {
     return true;
-  }
-
-  // Immibis Microblocks
-
-  private void initMicroblocks() {
-    if (MicroblocksUtil.supportMicroblocks()) {
-      createCovers();
-    }
-  }
-
-  @Method(modid = "ImmibisMicroblocks")
-  private void createCovers() {
-    IMicroblockSystem ims = MicroblockAPIUtils.getMicroblockSystem();
-    if (ims != null) {
-      covers = ims.createMicroblockCoverSystem(this);
-    }
-  }
-
-  @Override
-  @Method(modid = "ImmibisMicroblocks")
-  public boolean isPlacementBlocked(PartType<?> part, EnumPosition pos) {
-    EnumPartClass type = part.getPartClass();
-    // Let's do some cheaper checks first
-    if (type == EnumPartClass.Strip) {
-      // No pillars
-      if (pos == EnumPosition.PostX || pos == EnumPosition.PostY || pos == EnumPosition.PostZ) {
-        return true;
-      }
-    } else if (part.getSize() < 0.25) {
-      // Anything this small can never intersect conduits
-      return false;
-    }
-    // Finally just check core BB intersections
-    // Ignore anything that is not a core to allow blocking of connections
-    else if (type == EnumPartClass.Panel) {
-      List<CollidableComponent> boxes = getCollidableComponents();
-      BoundingBox bb = new BoundingBox(Part.getBoundingBoxFromPool(pos, part.getSize()));
-      for (CollidableComponent c : boxes) {
-        if (c.dir == ForgeDirection.UNKNOWN && c.bound.intersects(bb)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  @Override
-  @Method(modid = "ImmibisMicroblocks")
-  public IMicroblockCoverSystem getCoverSystem() {
-    return (IMicroblockCoverSystem) covers;
-  }
-
-  @Method(modid = "ImmibisMicroblocks")
-  private void writeMicroblocksToNBT(NBTTagCompound tag) {
-    if (covers != null) {
-      ((IMicroblockCoverSystem) covers).writeToNBT(tag);
-    }
-  }
-
-  @Method(modid = "ImmibisMicroblocks")
-  private void readMicroblocksFromNBT(NBTTagCompound tag) {
-    if (covers != null) {
-      ((IMicroblockCoverSystem) covers).readFromNBT(tag);
-    }
-  }
-
-  @Override
-  @Method(modid = "ImmibisMicroblocks")
-  public Packet getDescriptionPacket() {
-    if (covers == null) {
-      return super.getDescriptionPacket();
-    }
-
-    NBTTagCompound tag = new NBTTagCompound();
-    tag.setByteArray("C", ((IMicroblockCoverSystem) covers).writeDescriptionBytes());
-    writeCustomNBT(tag);
-    return new S35PacketUpdateTileEntity(xCoord, yCoord, zCoord, 1, tag);
-  }
-
-  @Override
-  @Method(modid = "ImmibisMicroblocks")
-  public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) {
-    super.onDataPacket(net, pkt);
-    if (covers != null) {
-      ((IMicroblockCoverSystem) covers).readDescriptionBytes(pkt.func_148857_g().getByteArray("C"), 0);
-    }
-  }
-
-  @Override
-  @Method(modid = "ImmibisMicroblocks")
-  public void onMicroblocksChanged() {
-    Set<ForgeDirection> needUpdates = EnumSet.allOf(ForgeDirection.class);
-    needUpdates.remove(ForgeDirection.UNKNOWN);
-    for (Part p : getCoverSystem().getAllParts()) {
-      if (p.type.getPartClass() == EnumPartClass.Panel) {
-        ForgeDirection dir = MicroblocksUtil.posToDir(p.pos);
-        updateConnections(dir, true);
-        needUpdates.remove(dir);
-      }
-    }
-    for (ForgeDirection dir : needUpdates) {
-      updateConnections(dir, false);
-    }
-    
-    worldObj.notifyBlocksOfNeighborChange(xCoord, yCoord, zCoord, getBlockType());
-    updateBlock();
-  }
-  
-  @Method(modid = "ImmibisMicroblocks")
-  private void updateConnections(ForgeDirection dir, boolean remove) {
-    TileEntity neighbor = getLocation().getLocation(dir).getTileEntity(worldObj);
-    IConduitBundle neighborBundle = (IConduitBundle) (neighbor instanceof IConduitBundle ? neighbor : null);
-    for (IConduit c : getConduits()) {
-      if (remove) {
-        removeConnection(dir, c);
-      } else if (neighborBundle != null) {
-        addConnection(dir, c, neighborBundle.getConduit(c.getBaseConduitType()));
-      }
-      c.connectionsChanged();
-    }
-    dir = dir.getOpposite();
-    if (neighbor instanceof IConduitBundle) {
-      for (IConduit c : ((TileConduitBundle) neighbor).getConduits()) {
-        if (remove) {
-          removeConnection(dir, c);
-        } else if (neighborBundle != null) {
-          addConnection(dir, c, getConduit(c.getBaseConduitType()));
-        }
-        c.connectionsChanged();
-      }
-    }
-  }
-
-  @Method(modid = "ImmibisMicroblocks")
-  private void removeConnection(ForgeDirection dir, IConduit c) {
-    if (c.getConduitConnections().contains(dir)) {
-      c.conduitConnectionRemoved(dir);
-    }
-  }
-
-  @Method(modid = "ImmibisMicroblocks")
-  private void addConnection(ForgeDirection dir, IConduit c, IConduit connectingTo) {
-    if (connectingTo != null) {
-      if (!c.getConduitConnections().contains(dir) && connectingTo.canConnectToConduit(dir, c)) {
-        c.conduitConnectionAdded(dir);
-      }
-    }
   }
 
   // OpenComputers

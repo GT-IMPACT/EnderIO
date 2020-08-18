@@ -186,10 +186,6 @@ public class ItemDarkSteelArmor extends ItemArmor implements IEnergyContainerIte
     if(EnergyUpgrade.itemHasAnyPowerUpgrade(itemstack)) {
       list.add(EnumChatFormatting.WHITE + EnderIO.lang.localize("item."+name+"_armor.tooltip.line1"));
       list.add(EnumChatFormatting.WHITE + EnderIO.lang.localize("item."+name+"_armor.tooltip.line2"));
-      if(DarkSteelItems.isArmorPart(itemstack.getItem(), 3)) {
-        list.add(EnumChatFormatting.WHITE + EnderIO.lang.localize("item."+name+"_boots.tooltip.line1"));
-        list.add(EnumChatFormatting.WHITE + EnderIO.lang.localize("item."+name+"_boots.tooltip.line2"));
-      }
     }
     DarkSteelRecipeManager.instance.addAdvancedTooltipEntries(itemstack, entityplayer, list, flag);
   }
@@ -293,7 +289,7 @@ public class ItemDarkSteelArmor extends ItemArmor implements IEnergyContainerIte
   @Override
   @Method(modid = "Thaumcraft")
   public int getVisDiscount(ItemStack stack, EntityPlayer player, Aspect aspect) {
-    if(stack == null || !DarkSteelItems.isArmorPart(stack.getItem(), 0)) {
+    if(stack == null) {
       return 0;
     }
     return GogglesOfRevealingUpgrade.isUpgradeEquipped(player) ? 5 : 0;
@@ -318,7 +314,7 @@ public class ItemDarkSteelArmor extends ItemArmor implements IEnergyContainerIte
   @Override
   @Method(modid = "Forestry")
   public boolean canSeePollination(EntityPlayer player, ItemStack armor, boolean doSee) {
-    if(armor == null ||  DarkSteelItems.isArmorPart(armor.getItem(), 0)) {
+    if(armor == null) {
       return false;
     }
     return NaturalistEyeUpgrade.isUpgradeEquipped(player);

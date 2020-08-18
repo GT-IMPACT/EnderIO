@@ -286,7 +286,7 @@ public class DarkSteelController {
 
     ItemStack leggings = player.getEquipmentInSlot(2);
     SpeedUpgrade speedUpgrade = SpeedUpgrade.loadFromItem(leggings);
-    if(leggings != null && DarkSteelItems.isArmorPart(leggings.getItem(),2) && speedUpgrade != null && isSpeedActive(player)) {
+    if(leggings != null && speedUpgrade != null && isSpeedActive(player)) {
 
       double horzMovement = Math.abs(player.distanceWalkedModified - player.prevDistanceWalkedModified);
       double costModifier = player.isSprinting() ? Config.darkSteelSprintPowerCost : Config.darkSteelWalkPowerCost;
@@ -308,7 +308,7 @@ public class DarkSteelController {
   private void updateStepHeightAndFallDistance(EntityPlayer player) {
     ItemStack boots = player.getEquipmentInSlot(1);
 
-    if(boots != null && DarkSteelItems.isArmorPart(boots.getItem(), 3) && !player.capabilities.allowFlying) {
+    if(boots != null && !player.capabilities.allowFlying) {
       int costedDistance = (int) player.fallDistance;
       if(costedDistance > 0) {
         int energyCost = costedDistance * Config.darkSteelFallDistanceCost;
@@ -321,7 +321,7 @@ public class DarkSteelController {
     }
 
     JumpUpgrade jumpUpgrade = JumpUpgrade.loadFromItem(boots);
-    if(jumpUpgrade != null && boots != null && DarkSteelItems.isArmorPart(boots.getItem(), 3) && isStepAssistActive(player)) {
+    if(jumpUpgrade != null && boots != null && isStepAssistActive(player)) {
       player.stepHeight = 1.0023F;
     } else if(player.stepHeight == 1.0023F) {
       player.stepHeight = 0.5001F;
@@ -466,7 +466,7 @@ public class DarkSteelController {
     ItemStack boots = player.getEquipmentInSlot(1);
     JumpUpgrade jumpUpgrade = JumpUpgrade.loadFromItem(boots);
 
-    if(jumpUpgrade == null || boots == null || !DarkSteelItems.isArmorPart(boots.getItem(), 3)) {
+    if(jumpUpgrade == null || boots == null) {
       return;
     }
 

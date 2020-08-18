@@ -61,7 +61,7 @@ public class SolarUpgrade extends AbstractUpgrade {
 
   @Override
   public boolean canAddToItem(ItemStack stack) {
-      if(stack == null || !DarkSteelItems.isArmorPart(stack.getItem(), 0)|| !EnergyUpgrade.itemHasAnyPowerUpgrade(stack)) {
+      if(stack == null || !EnergyUpgrade.itemHasAnyPowerUpgrade(stack)) {
         return false;
       }
       SolarUpgrade up = loadFromItem(stack);

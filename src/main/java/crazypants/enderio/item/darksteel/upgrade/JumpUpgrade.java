@@ -49,7 +49,7 @@ public class JumpUpgrade extends AbstractUpgrade {
 
   @Override
   public boolean canAddToItem(ItemStack stack) {
-    if(stack == null || !DarkSteelItems.isArmorPart(stack.getItem(), 3) || !EnergyUpgrade.itemHasAnyPowerUpgrade(stack)) {
+    if(stack == null || !EnergyUpgrade.itemHasAnyPowerUpgrade(stack)) {
       return false;
     }
     JumpUpgrade up = loadFromItem(stack);

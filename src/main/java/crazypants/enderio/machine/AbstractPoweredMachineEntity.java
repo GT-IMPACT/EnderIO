@@ -97,13 +97,6 @@ public abstract class AbstractPoweredMachineEntity extends AbstractMachineEntity
 		    return capacitor;
 	  }
 
-	  else if(capacitorType == Capacitors.TOTEMIC_CAPACITOR) {
-        ItemStack contents = inventory[slotDefinition.minUpgradeSlot];
-        if(contents != null && contents.getItem() == EnderIO.itemBasicCapacitor) {
-        	return EnderIO.itemBasicCapacitor.getCapacitor(contents);
-        }
-	  }
-
 	  return capacitorType.capacitor;
 
   }
@@ -121,18 +114,7 @@ public abstract class AbstractPoweredMachineEntity extends AbstractMachineEntity
 
   public void setCapacitor(Capacitors capacitorType) {
     this.capacitorType = capacitorType;
-
-    if(capacitorType == Capacitors.TOTEMIC_CAPACITOR) {
-        ItemStack contents = inventory[slotDefinition.minUpgradeSlot];
-        if(contents != null && contents.getItem() == EnderIO.itemBasicCapacitor) {
-        	setCapacitor(EnderIO.itemBasicCapacitor.getCapacitor(contents));
-        }
-    }
-
-    else {
-    	this.capacitor = capacitorType.capacitor;
-    }
-
+    this.capacitor = capacitorType.capacitor;
     onCapacitorTypeChange();
     //Force a check that the new value is in bounds
     setEnergyStored(getEnergyStored());

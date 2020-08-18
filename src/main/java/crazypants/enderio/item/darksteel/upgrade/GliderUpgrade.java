@@ -52,7 +52,7 @@ public class GliderUpgrade extends AbstractUpgrade {
 
   @Override
   public boolean canAddToItem(ItemStack stack) {
-    if(stack == null || !DarkSteelItems.isArmorPart(stack.getItem(), 1)) {
+    if(stack == null) {
       return false;
     }
     GliderUpgrade up = loadFromItem(stack);

@@ -6,8 +6,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import mods.immibis.core.api.multipart.IMultipartRenderingBlockMarker;
-import mods.immibis.core.api.multipart.IMultipartSystem;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.ISound;
@@ -80,7 +78,7 @@ import crazypants.util.IFacade;
   @Interface(iface = "powercrystals.minefactoryreloaded.api.rednet.IRedNetOmniNode", modid = "MineFactoryReloaded"),
   @Interface(iface = "mods.immibis.core.api.multipart.IMultipartRenderingBlockMarker", modid = "ImmibisMicroblocks")
 })
-public class BlockConduitBundle extends BlockEio implements IGuiHandler, IFacade, IRotatableFacade, IRedNetOmniNode, IMultipartRenderingBlockMarker {
+public class BlockConduitBundle extends BlockEio implements IGuiHandler, IFacade, IRotatableFacade, IRedNetOmniNode {
 
   private static final String KEY_CONNECTOR_ICON = "enderIO:conduitConnector";
   private static final String KEY_CONNECTOR_ICON_EXTERNAL = "enderIO:conduitConnectorExternal";
@@ -141,10 +139,7 @@ public class BlockConduitBundle extends BlockEio implements IGuiHandler, IFacade
   @SideOnly(Side.CLIENT)
   @Override
   public boolean addHitEffects(World world, MovingObjectPosition target, EffectRenderer effectRenderer) {
-    if (MicroblocksUtil.supportMicroblocks() && IM__addHitEffects(world, target, effectRenderer)) {
-      return true;
-    }
-    
+
     IIcon tex = null;
 
     TileConduitBundle cb = (TileConduitBundle) world.getTileEntity(target.blockX, target.blockY, target.blockZ);
@@ -170,9 +165,6 @@ public class BlockConduitBundle extends BlockEio implements IGuiHandler, IFacade
   @Override
   @SideOnly(Side.CLIENT)
   public boolean addDestroyEffects(World world, int x, int y, int z, int meta, EffectRenderer effectRenderer) {
-    if (MicroblocksUtil.supportMicroblocks() && IM__addDestroyEffects(world, x, y, z, meta, effectRenderer)) {
-      return true;
-    }
 
     IIcon tex = lastRemovedComponetIcon;
     byte b0 = 4;
@@ -269,9 +261,6 @@ public class BlockConduitBundle extends BlockEio implements IGuiHandler, IFacade
   @Override
   public ItemStack getPickBlock(MovingObjectPosition target, World world, int x, int y, int z, EntityPlayer player) {
     ItemStack ret = null;
-    if (MicroblocksUtil.supportMicroblocks()) {
-      ret = getMicroblockPickBlock(target, world, x, y, z, player);
-    }
     if(ret == null && target != null && target.hitInfo instanceof CollidableComponent) {
       CollidableComponent cc = (CollidableComponent) target.hitInfo;
       TileConduitBundle bundle = (TileConduitBundle) world.getTileEntity(x, y, z);
@@ -316,9 +305,6 @@ public class BlockConduitBundle extends BlockEio implements IGuiHandler, IFacade
 
   @Override
   public boolean isSideSolid(IBlockAccess world, int x, int y, int z, ForgeDirection side) {
-    if (MicroblocksUtil.supportMicroblocks() && IM__isSideSolid(world, x, y, z, side)) {
-      return true;
-    }
 
     TileEntity te = world.getTileEntity(x, y, z);
     if (!(te instanceof IConduitBundle)) {
@@ -477,11 +463,6 @@ public class BlockConduitBundle extends BlockEio implements IGuiHandler, IFacade
 
     if(!breakBlock) {
       world.markBlockForUpdate(x, y, z);
-    }
-
-    // TODO no microblock sounds...not sure if fixable, need to contact immibis
-    if (MicroblocksUtil.supportMicroblocks()) {
-      IM__getDrops(drop, world, x, y, z, te.getEntity().getBlockMetadata(), 0);
     }
 
     if (!world.isRemote && !player.capabilities.isCreativeMode) {
@@ -698,10 +679,6 @@ public class BlockConduitBundle extends BlockEio implements IGuiHandler, IFacade
   }
 
   public boolean handleFacadeClick(World world, int x, int y, int z, EntityPlayer player, int side, IConduitBundle bundle, ItemStack stack) {
-    if (MicroblocksUtil.supportMicroblocks() && hasMicroblocks(bundle)) {
-      return false;
-    }
-    
     // Add facade
     if(player.isSneaking()) {
       return false;
@@ -819,10 +796,6 @@ public class BlockConduitBundle extends BlockEio implements IGuiHandler, IFacade
   @Override
   public void addCollisionBoxesToList(World world, int x, int y, int z, AxisAlignedBB axisalignedbb, @SuppressWarnings("rawtypes") List arraylist,
       Entity par7Entity) {
-    
-    if (MicroblocksUtil.supportMicroblocks()) {
-      IM__addCollisionBoxesToList(world, x, y, z, axisalignedbb, arraylist, par7Entity);
-    }
 
     TileEntity te = world.getTileEntity(x, y, z);
     if(!(te instanceof IConduitBundle)) {
@@ -919,10 +892,6 @@ public class BlockConduitBundle extends BlockEio implements IGuiHandler, IFacade
       if (ret != null) {
         ret.hitInfo = raytraceResult.component;
       }
-    }
-
-    if (MicroblocksUtil.supportMicroblocks()) {
-      return IM__collisionRayTrace(ret, world, x, y, z, origin, direction);
     }
 
     return ret;
@@ -1098,42 +1067,5 @@ public class BlockConduitBundle extends BlockEio implements IGuiHandler, IFacade
     }
     IConduitBundle bundle = (IConduitBundle) te;
     return bundle.getConduit(IRedstoneConduit.class);
-  }
-  
-  public ItemStack getMicroblockPickBlock(MovingObjectPosition target, World world, int x, int y, int z, EntityPlayer player) {
-    return IMultipartSystem.instance.hook_getPickBlock(target, world, x, y, z, player);
-  }
-
-  // IM Hooks
-
-  private boolean IM__isSideSolid(IBlockAccess world, int x, int y, int z, ForgeDirection side) {
-    return IMultipartSystem.instance.hook_isSideSolid(world, x, y, z, side);
-  }
-
-  @SideOnly(Side.CLIENT)
-  private boolean IM__addDestroyEffects(World world, int x, int y, int z, int meta, EffectRenderer effectRenderer) {
-    return IMultipartSystem.instance.hook_addDestroyEffects(world, x, y, z, meta, effectRenderer);
-  }
-
-  @SideOnly(Side.CLIENT)
-  private boolean IM__addHitEffects(World worldObj, MovingObjectPosition target, EffectRenderer effectRenderer) {
-    return IMultipartSystem.instance.hook_addHitEffects(worldObj, target, effectRenderer);
-  }
-
-  private MovingObjectPosition IM__collisionRayTrace(MovingObjectPosition cur, World world, int x, int y, int z, Vec3 src, Vec3 dst) {
-    return IMultipartSystem.instance.hook_collisionRayTrace(cur, world, x, y, z, src, dst);
-  }
-
-  @SuppressWarnings({ "rawtypes", "unchecked" })
-  private void IM__addCollisionBoxesToList(World world, int x, int y, int z, AxisAlignedBB mask, List list, Entity entity) {
-    IMultipartSystem.instance.hook_addCollisionBoxesToList(world, x, y, z, mask, list, entity);
-  }
-
-  private ArrayList<ItemStack> IM__getDrops(List<ItemStack> cur, World world, int x, int y, int z, int metadata, int fortune) {
-    return IMultipartSystem.instance.hook_getDrops(cur, world, x, y, z, metadata, fortune);
-  }
-
-  private boolean hasMicroblocks(IConduitBundle bundle) {
-    return !bundle.getCoverSystem().getAllParts().isEmpty();
   }
 }

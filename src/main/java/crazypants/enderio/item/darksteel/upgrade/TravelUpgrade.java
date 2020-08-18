@@ -37,7 +37,7 @@ public class TravelUpgrade extends AbstractUpgrade {
 
   @Override
   public boolean canAddToItem(ItemStack stack) {
-    if(stack == null || (stack.getItem() != DarkSteelItems.itemDarkSteelSword && stack.getItem() != DarkSteelItems.itemEndSteelPickaxe && stack.getItem() != DarkSteelItems.itemEndSteelSword && stack.getItem() != DarkSteelItems.itemDarkSteelPickaxe)|| !EnergyUpgrade.itemHasAnyPowerUpgrade(stack)) {
+    if(stack == null || (stack.getItem() != DarkSteelItems.itemDarkSteelSword && stack.getItem() != DarkSteelItems.itemDarkSteelPickaxe)|| !EnergyUpgrade.itemHasAnyPowerUpgrade(stack)) {
       return false;
     }
     TravelUpgrade up = loadFromItem(stack);

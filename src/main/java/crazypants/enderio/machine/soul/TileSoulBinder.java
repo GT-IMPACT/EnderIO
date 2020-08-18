@@ -169,20 +169,6 @@ public class TileSoulBinder extends AbstractPoweredTaskEntity implements IHaveEx
     case ENDER_CAPACITOR:
       setCapacitor(CAP_THREE);
       break;
-	case CRYSTALLINE_CAPACITOR:
-		break;
-	case ENDERGETIC_CAPACITOR:
-		break;
-	case ENDERGISED_CAPACITOR:
-		break;
-	case MELODIC_CAPACITOR:
-		break;
-	case SILVER_CAPACITOR:
-		break;
-	case STELLAR_CAPACITOR:
-		break;
-	case TOTEMIC_CAPACITOR:
-		break;
 	default:
 		break;
     }

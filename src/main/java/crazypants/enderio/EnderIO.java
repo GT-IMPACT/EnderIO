@@ -56,7 +56,6 @@ import crazypants.enderio.conduit.liquid.ItemLiquidConduit;
 import crazypants.enderio.conduit.me.ItemMEConduit;
 import crazypants.enderio.conduit.oc.ItemOCConduit;
 import crazypants.enderio.conduit.power.ItemPowerConduit;
-import crazypants.enderio.conduit.power.endergy.ItemPowerConduitEndergy;
 import crazypants.enderio.conduit.redstone.ConduitBundledRedstoneProvider;
 import crazypants.enderio.conduit.redstone.InsulatedRedstoneConduit;
 import crazypants.enderio.conduit.redstone.ItemRedstoneConduit;
@@ -147,15 +146,11 @@ import crazypants.enderio.material.ItemAlloy;
 import crazypants.enderio.material.ItemCapacitor;
 import crazypants.enderio.material.ItemFrankenSkull;
 import crazypants.enderio.material.ItemFusedQuartzFrame;
-import crazypants.enderio.material.ItemGrindingBall;
 import crazypants.enderio.material.ItemMachinePart;
 import crazypants.enderio.material.ItemMaterial;
 import crazypants.enderio.material.ItemPowderIngot;
 import crazypants.enderio.material.MaterialRecipes;
 import crazypants.enderio.material.OreDictionaryPreferences;
-import crazypants.enderio.material.endergy.BlockIngotStorageEndergy;
-import crazypants.enderio.material.endergy.ItemAlloyEndergy;
-import crazypants.enderio.material.endergy.ItemGrindingBallEndergy;
 import crazypants.enderio.network.PacketHandler;
 import crazypants.enderio.rail.BlockEnderRail;
 import crazypants.enderio.teleport.ItemTravelStaff;
@@ -199,16 +194,12 @@ public class EnderIO {
   // Materials
   public static ItemCapacitor itemBasicCapacitor;
   public static ItemAlloy itemAlloy;
-  public static ItemGrindingBall itemGrindingBall;
-  public static ItemAlloyEndergy itemAlloyEndergy;
-  public static ItemGrindingBallEndergy itemGrindingBallEndergy;
   public static BlockFusedQuartz blockFusedQuartz;
   public static ItemFusedQuartzFrame itemFusedQuartzFrame;
   public static ItemMachinePart itemMachinePart;
   public static ItemPowderIngot itemPowderIngot;
   public static ItemMaterial itemMaterial;
   public static BlockIngotStorage blockIngotStorage;
-  public static BlockIngotStorageEndergy blockIngotStorageEndergy;
   public static BlockDarkSteelBars blockDarkIronBars;
   public static BlockSoulariumBars blockSoulariumBars;
   public static BlockEndSteelBars blockEndSteelBars;
@@ -241,7 +232,6 @@ public class EnderIO {
   public static ItemConduitFacade itemConduitFacade;
   public static ItemRedstoneConduit itemRedstoneConduit;
   public static ItemPowerConduit itemPowerConduit;
-  public static ItemPowerConduitEndergy itemPowerConduitEndergy;
   public static ItemLiquidConduit itemLiquidConduit;
   public static ItemItemConduit itemItemConduit;
   public static ItemGasConduit itemGasConduit;
@@ -445,7 +435,6 @@ public class EnderIO {
 
     itemRedstoneConduit = ItemRedstoneConduit.create();
     itemPowerConduit = ItemPowerConduit.create();
-    itemPowerConduitEndergy = ItemPowerConduitEndergy.create();
     itemLiquidConduit = ItemLiquidConduit.create();
     itemItemConduit = ItemItemConduit.create();
     itemGasConduit = ItemGasConduit.create();
@@ -464,9 +453,6 @@ public class EnderIO {
     itemMachinePart = ItemMachinePart.create();
     itemMaterial = ItemMaterial.create();
     itemAlloy = ItemAlloy.create();
-    itemGrindingBall = ItemGrindingBall.create();
-    itemAlloyEndergy = ItemAlloyEndergy.create();
-    itemGrindingBallEndergy = ItemGrindingBallEndergy.create();
     itemPowderIngot = ItemPowderIngot.create();
 
     registerFluids();
@@ -481,7 +467,6 @@ public class EnderIO {
     itemSoulVessel = ItemSoulVessel.create();
 
     blockIngotStorage = BlockIngotStorage.create();
-    blockIngotStorageEndergy = BlockIngotStorageEndergy.create();
 
     blockDarkIronBars = BlockDarkSteelBars.create();
     blockSoulariumBars = BlockSoulariumBars.create();

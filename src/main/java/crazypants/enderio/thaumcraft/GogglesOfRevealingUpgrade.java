@@ -51,7 +51,7 @@ public class GogglesOfRevealingUpgrade extends AbstractUpgrade {
 
   @Override
   public boolean canAddToItem(ItemStack stack) {
-    if(stack == null || !DarkSteelItems.isArmorPart(stack.getItem(), 0) || getGoggles() == null) {
+    if(stack == null || getGoggles() == null) {
       return false;
     }
     GogglesOfRevealingUpgrade up = loadFromItem(stack);

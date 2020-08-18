@@ -50,7 +50,7 @@ public class NaturalistEyeUpgrade extends AbstractUpgrade {
 
   @Override
   public boolean canAddToItem(ItemStack stack) {
-    if(stack == null || !DarkSteelItems.isArmorPart(stack.getItem(), 0) || getUpgradeItem() == null) {
+    if(stack == null || getUpgradeItem() == null) {
       return false;
     }
     NaturalistEyeUpgrade up = loadFromItem(stack);

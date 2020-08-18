@@ -35,10 +35,6 @@ public class ItemPowerConduit extends AbstractItemConduit {
     super(ModObject.itemPowerConduit, subtypes);
   }
 
-  protected ItemPowerConduit(ModObject modObject, ItemConduitSubtype[] subtypes) {
-    super(modObject, subtypes);
-  }
-
   @Override
   public Class<? extends IConduit> getBaseConduitType() {
     return IPowerConduit.class;

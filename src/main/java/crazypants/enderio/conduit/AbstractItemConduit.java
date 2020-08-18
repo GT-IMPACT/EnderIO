@@ -2,10 +2,6 @@ package crazypants.enderio.conduit;
 
 import java.util.List;
 
-import mods.immibis.microblocks.api.IMicroblockCoverSystem;
-import mods.immibis.microblocks.api.IMicroblockSupporterTile;
-import mods.immibis.microblocks.api.MicroblockAPIUtils;
-import mods.immibis.microblocks.api.Part;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
@@ -63,10 +59,7 @@ public abstract class AbstractItemConduit extends Item implements IConduitItem {
 
   @Override
   public boolean onItemUse(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ) {
-    if (MicroblocksUtil.supportMicroblocks() && tryAddToMicroblocks(stack, player, world, x, y, z, side)) {
-      return true;
-    }
-    
+
     BlockCoord placeAt = Util.canPlaceItem(stack, EnderIO.blockConduitBundle, player, world, x, y, z, side);
     if(placeAt != null) {
       if(!world.isRemote) {
@@ -116,22 +109,6 @@ public abstract class AbstractItemConduit extends Item implements IConduitItem {
       }
     }
 
-    return false;
-  }
-
-  private boolean tryAddToMicroblocks(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side) {
-    TileEntity te = world.getTileEntity(x, y, z);
-    if (te != null && te.getClass().getName().equals("mods.immibis.microblocks.TileMicroblockContainer")) {
-      IMicroblockCoverSystem covers = ((IMicroblockSupporterTile) te).getCoverSystem();
-      world.setBlock(x, y, z, EnderIO.blockConduitBundle);
-      EnderIO.blockConduitBundle.onBlockActivated(world, x, y, z, player, side, 0, 0, 0);
-      IMicroblockCoverSystem newCovers = MicroblockAPIUtils.createMicroblockCoverSystem((IMicroblockSupporterTile) world.getTileEntity(x, y, z));
-      for (Part p : covers.getAllParts()) {
-        newCovers.addPart(p);
-      }
-      ((TileConduitBundle)world.getTileEntity(x, y, z)).covers = newCovers;
-      return true;
-    }
     return false;
   }
 

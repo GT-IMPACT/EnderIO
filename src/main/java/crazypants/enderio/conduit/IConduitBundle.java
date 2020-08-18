@@ -8,7 +8,6 @@ import li.cil.oc.api.network.Environment;
 import li.cil.oc.api.network.SidedEnvironment;
 import li.cil.oc.api.network.Node;
 import mekanism.api.gas.IGasHandler;
-import mods.immibis.microblocks.api.IMicroblockSupporterTile;
 import net.minecraft.block.Block;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.IBlockAccess;
@@ -36,8 +35,7 @@ import crazypants.enderio.power.IInternalPowerHandler;
     @Interface(iface = "li.cil.oc.api.network.Environment", modid = "OpenComputersAPI|Network"),
     @Interface(iface = "li.cil.oc.api.network.SidedEnvironment", modid = "OpenComputersAPI|Network")
 })
-public interface IConduitBundle extends IInternalPowerHandler, IFluidHandler, IItemDuct, IGasHandler, IGridHost,
-    IMicroblockSupporterTile, Environment, SidedEnvironment {
+public interface IConduitBundle extends IInternalPowerHandler, IFluidHandler, IItemDuct, IGasHandler, IGridHost, Environment, SidedEnvironment {
 
   TileEntity getEntity();
 

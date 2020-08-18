@@ -44,7 +44,7 @@ public class NightVisionUpgrade extends AbstractUpgrade {
 
   @Override
   public boolean canAddToItem(ItemStack stack) {
-    if(stack == null || !DarkSteelItems.isArmorPart(stack.getItem(), 0)) {
+    if(stack == null) {
       return false;
     }
     NightVisionUpgrade up = loadFromItem(stack);
