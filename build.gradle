@@ -38,7 +38,7 @@ else {
 
 group = "com.enderio"
 archivesBaseName = "EnderIO"
-version = "${minecraft_version}-${mod_version}.${buildnumber}"
+version = "${mod_version}-impact"
 boolean release = true
 
 if (project.hasProperty('mod_appendix')) {
