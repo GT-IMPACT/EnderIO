@@ -45,8 +45,11 @@ public class LiquidSettings extends BaseSettingsPanel {
 
   private static final int NEXT_FILTER_ID = 989322;
 
+  private static final int ID_CHANNEL = GuiExternalConnection.nextButtonId();
+
   private final RedstoneModeButton rsB;
   private final ColorButton colorB;
+  private ColorButton channelB;
 
   private static final String autoExtractStr = EnderIO.lang.localize("gui.conduit.fluid.autoExtract");
   private static final String filterStr = EnderIO.lang.localize("gui.conduit.fluid.filter");
@@ -55,9 +58,9 @@ public class LiquidSettings extends BaseSettingsPanel {
 
   private EnderLiquidConduit eConduit;
   private boolean isEnder;
-  private static final int filterX = 59;
-  private static final int filterY = 63;
-  private static final Rectangle filterBounds = new Rectangle(filterX, filterY, 90, 18);
+  private static final int filterX = 22;
+  private static final int filterY = 71+5;
+  private static final Rectangle filterBounds = new Rectangle(filterX, filterY, 162, 18);
   private GuiToolTip[] filterToolTips;
 
   private boolean inOutShowIn = true;
@@ -77,8 +80,8 @@ public class LiquidSettings extends BaseSettingsPanel {
 
       inOutNextB = MultiIconButton.createRightArrowButton(gui, NEXT_FILTER_ID, x, y);
 
-      x = filterX - 20;
-      y = filterY + 1;
+      x = filterX + 1;
+      y = filterY - 20;
 
       whiteListB = new IconButton(gui, ID_WHITELIST, x, y, IconEIO.FILTER_WHITELIST);
       whiteListB.setToolTip(EnderIO.lang.localize("gui.conduit.fluid.whitelist"));
@@ -89,6 +92,14 @@ public class LiquidSettings extends BaseSettingsPanel {
 
     int x = gap + gui.getFontRenderer().getStringWidth(autoExtractStr) + gap * 2;
     int y = customTop;
+
+    if(isEnder)
+    {
+      channelB = new ColorButton(gui, ID_CHANNEL, x, y);
+      channelB.setColorIndex(0);
+      channelB.setToolTipHeading(EnderIO.lang.localize("gui.conduit.item.channel"));
+      x += channelB.getWidth() + 4;
+    }
 
     rsB = new RedstoneModeButton(gui, ID_REDSTONE_BUTTON, x, y, new IRedstoneModeControlable() {
 
@@ -112,11 +123,12 @@ public class LiquidSettings extends BaseSettingsPanel {
     colorB = new ColorButton(gui, ID_COLOR_BUTTON, x, y);
     colorB.setToolTipHeading(EnderIO.lang.localize("gui.conduit.redstone.signalColor"));
     colorB.setColorIndex(conduit.getExtractionSignalColor(gui.getDir()).ordinal());
+
   }
 
   private void addFilterTooltips() {
-    filterToolTips = new GuiToolTip[5];
-    for (int i = 0; i < 5; i++) {
+    filterToolTips = new GuiToolTip[9];
+    for (int i = 0; i < 9; i++) {
       Rectangle bound = new Rectangle(filterX + (i * 18), filterY, 18, 18);
       filterToolTips[i] = new FilterToolTip(bound, i);
       gui.addToolTip(filterToolTips[i]);
@@ -133,6 +145,14 @@ public class LiquidSettings extends BaseSettingsPanel {
       toggleBlacklist();
     } else if(guiButton.id == NEXT_FILTER_ID) {
       inOutShowIn = !inOutShowIn;
+      if(channelB != null) {
+        channelB.onGuiInit();
+        if(isInput()) {
+          channelB.setColorIndex(eConduit.getInputColor(gui.getDir()).ordinal());
+        } else {
+          channelB.setColorIndex(eConduit.getOutputColor(gui.getDir()).ordinal());
+        }
+      }
       if(isInput()) {
         rsB.onGuiInit();
         colorB.onGuiInit();
@@ -142,6 +162,18 @@ public class LiquidSettings extends BaseSettingsPanel {
       }
       if(isFilterVisible()) {
         updateWhiteListButton(eConduit.getFilter(gui.getDir(), isInput()));
+      }
+    } else if(guiButton.id == ID_CHANNEL) {
+      if(isEnder) {
+
+        DyeColor col = DyeColor.values()[channelB.getColorIndex()];
+
+        if(isInput()) {
+          eConduit.setInputColor(gui.getDir(), col);
+        } else  {
+          eConduit.setOutputColor(gui.getDir(), col);
+        }
+        setConduitChannel(col);
       }
     }
   }
@@ -189,7 +221,17 @@ public class LiquidSettings extends BaseSettingsPanel {
 
   protected void setConduitFilter(FluidFilter filter) {
     eConduit.setFilter(gui.getDir(), filter, isInput());
+
     PacketHandler.INSTANCE.sendToServer(new PacketFluidFilter(eConduit, gui.getDir(), filter, isInput()));
+  }
+  protected void setConduitChannel(DyeColor channel) {
+    if(isInput()) {
+      eConduit.setInputColor(gui.getDir(), channel);
+    } else {
+      eConduit.setOutputColor(gui.getDir(), channel);
+    }
+
+    PacketHandler.INSTANCE.sendToServer(new PacketFluidChannel(eConduit, gui.getDir(), isInput(), channel));
   }
 
   @Override
@@ -207,6 +249,13 @@ public class LiquidSettings extends BaseSettingsPanel {
 
     if(!isEnder) {
       return;
+    }
+
+    channelB.onGuiInit();
+    if(isInput()){
+      channelB.setColorIndex(eConduit.getInputColor(gui.getDir()).ordinal());
+    } else {
+      channelB.setColorIndex(eConduit.getOutputColor(gui.getDir()).ordinal());
     }
 
     if(isFilterVisible()) {
@@ -251,6 +300,7 @@ public class LiquidSettings extends BaseSettingsPanel {
       }
       inOutNextB.detach();
       whiteListB.detach();
+      channelB.detach();
     }
   }
 
@@ -279,13 +329,14 @@ public class LiquidSettings extends BaseSettingsPanel {
       int sw = fr.getStringWidth(filterStr);
       int x = (gui.width / 2) - sw / 2;
       int y = top + 20;
-      fr.drawString(filterStr, x, y, ColorUtil.getRGB(Color.DARK_GRAY));
+      fr.drawString(filterStr, x-45, y+9, ColorUtil.getRGB(Color.DARK_GRAY));
 
       x = gui.getGuiLeft() + filterX;
       y = gui.getGuiTop() + filterY;
       GL11.glColor3f(1, 1, 1);
       gui.bindGuiTexture();
       gui.drawTexturedModalRect(x, y, 24, 238, 90, 18);
+      gui.drawTexturedModalRect(x+18*5, y, 24, 238, 90-18, 18);
 
       FluidFilter filter = eConduit.getFilter(gui.getDir(), isInput);
       if(filter != null && !filter.isEmpty()) {

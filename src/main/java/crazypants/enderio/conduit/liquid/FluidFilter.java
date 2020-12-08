@@ -11,7 +11,7 @@ import com.enderio.core.common.util.FluidUtil;
 
 public class FluidFilter {
 
-  private final FluidStack[] fluids = new FluidStack[5];
+  private final FluidStack[] fluids = new FluidStack[9];
   private boolean isBlacklist;
 
   public boolean isEmpty() {

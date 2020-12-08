@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import crazypants.enderio.conduit.gui.item.PacketExistingItemFilterSnapshot;
+import crazypants.enderio.conduit.gui.item.PacketModItemFilter;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.ISound;
@@ -49,14 +51,7 @@ import crazypants.enderio.api.tool.ITool;
 import crazypants.enderio.conduit.facade.ItemConduitFacade.FacadeType;
 import crazypants.enderio.conduit.geom.CollidableComponent;
 import crazypants.enderio.conduit.geom.ConduitConnectorType;
-import crazypants.enderio.conduit.gui.ExternalConnectionContainer;
-import crazypants.enderio.conduit.gui.GuiExternalConnection;
-import crazypants.enderio.conduit.gui.GuiExternalConnectionSelector;
-import crazypants.enderio.conduit.gui.PacketFluidFilter;
-import crazypants.enderio.conduit.gui.PacketOpenConduitUI;
-import crazypants.enderio.conduit.gui.PacketSlotVisibility;
-import crazypants.enderio.conduit.gui.item.PacketExistingItemFilterSnapshot;
-import crazypants.enderio.conduit.gui.item.PacketModItemFilter;
+import crazypants.enderio.conduit.gui.*;
 import crazypants.enderio.conduit.liquid.PacketFluidLevel;
 import crazypants.enderio.conduit.packet.PacketConnectionMode;
 import crazypants.enderio.conduit.packet.PacketExtractMode;
@@ -95,9 +90,9 @@ public class BlockConduitBundle extends BlockEio implements IGuiHandler, IFacade
     PacketHandler.INSTANCE.registerMessage(PacketExistingItemFilterSnapshot.class, PacketExistingItemFilterSnapshot.class, PacketHandler.nextID(), Side.SERVER);
     PacketHandler.INSTANCE.registerMessage(PacketModItemFilter.class, PacketModItemFilter.class, PacketHandler.nextID(), Side.SERVER);
     PacketHandler.INSTANCE.registerMessage(PacketFluidFilter.class, PacketFluidFilter.class, PacketHandler.nextID(), Side.SERVER);
+    PacketHandler.INSTANCE.registerMessage(PacketFluidChannel.class, PacketFluidChannel.class, PacketHandler.nextID(), Side.SERVER);
     PacketHandler.INSTANCE.registerMessage(PacketRedstoneConduitSignalColor.class, PacketRedstoneConduitSignalColor.class, PacketHandler.nextID(), Side.SERVER);
-    PacketHandler.INSTANCE.registerMessage(PacketRedstoneConduitOutputStrength.class, PacketRedstoneConduitOutputStrength.class, PacketHandler.nextID(),
-        Side.SERVER);
+    PacketHandler.INSTANCE.registerMessage(PacketRedstoneConduitOutputStrength.class, PacketRedstoneConduitOutputStrength.class, PacketHandler.nextID(), Side.SERVER);
     PacketHandler.INSTANCE.registerMessage(PacketOpenConduitUI.class, PacketOpenConduitUI.class, PacketHandler.nextID(), Side.SERVER);
     PacketHandler.INSTANCE.registerMessage(PacketSlotVisibility.class, PacketSlotVisibility.class, PacketHandler.nextID(), Side.SERVER);
     PacketHandler.INSTANCE.registerMessage(PacketOCConduitSignalColor.class, PacketOCConduitSignalColor.class,
