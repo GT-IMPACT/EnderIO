@@ -1,9 +1,6 @@
 package crazypants.enderio.conduit.liquid;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.fluids.FluidStack;
@@ -19,13 +16,53 @@ import crazypants.enderio.config.Config;
 
 public class EnderLiquidConduitNetwork extends AbstractConduitNetwork<ILiquidConduit, EnderLiquidConduit> {
 
+  private class TankIterator implements Iterator<NetworkTank> {
+    private int index = -1;
+    private int currentCount = 0;
+
+    public TankIterator start() {
+      currentCount = 0;
+      return this;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return !tanks.isEmpty() && currentCount < tanks.size();
+    }
+
+    @Override
+    public NetworkTank next() {
+      if (tanks.isEmpty()) {
+        return null;
+      }
+      currentCount++;
+      index++;
+      if (index >= tanks.size()) {
+        index = 0;
+      }
+      return tanks.get(index);
+    }
+
+    @Override
+    public void remove() {
+    }
+
+    public void rewind() {
+      if (index == 0)
+        index = tanks.size() - 1;
+      else
+        index--;
+      currentCount--;
+    }
+  }
+
   public static final int MAX_EXTRACT_PER_TICK = Config.enderFluidConduitExtractRate;
   public static final int MAX_IO_PER_TICK = Config.enderFluidConduitMaxIoRate;
 
   List<NetworkTank> tanks = new ArrayList<NetworkTank>();
   Map<NetworkTankKey, NetworkTank> tankMap = new HashMap<NetworkTankKey, NetworkTank>();
 
-  Map<NetworkTank, RoundRobinIterator<NetworkTank>> iterators;
+  Map<NetworkTank, TankIterator> iterators;
 
   boolean filling;
 
@@ -93,17 +130,20 @@ public class EnderLiquidConduitNetwork extends AbstractConduitNetwork<ILiquidCon
       int remaining = resource.amount;
       //TODO: Only change starting pos of iterator is doFill is true so a false then true returns the same
 
-      for (NetworkTank target : getIteratorForTank(tank)) {
+      TankIterator iterator;
+      for (iterator = getIteratorForTank(tank).start(); iterator.hasNext(); ) {
+        NetworkTank target = iterator.next();
         if(!target.equals(tank) && target.con.getOutputColor(target.conDir).equals(tank.con.getInputColor(tank.conDir)) && target.acceptsOuput && target.isValid() && matchedFilter(resource, target.con, target.conDir, false)) {
           int vol = target.externalTank.fill(target.tankDir, resource.copy(), doFill);
           remaining -= vol;
           filled += vol;
-          if(remaining <= 0) {
-            return filled;
+          if (remaining <= 0) {
+            break;
           }
           resource.amount = remaining;
         }
       }
+        if (!tank.con.isRoundRobin(tank.conDir)) iterator.rewind();
       return filled;
 
     } finally {
@@ -122,13 +162,13 @@ public class EnderLiquidConduitNetwork extends AbstractConduitNetwork<ILiquidCon
     return filter.matchesFilter(drained);
   }
 
-  private Iterable<NetworkTank> getIteratorForTank(NetworkTank tank) {
+  private TankIterator getIteratorForTank(NetworkTank tank) {
     if(iterators == null) {
-      iterators = new HashMap<NetworkTank, RoundRobinIterator<NetworkTank>>();
+      iterators = new HashMap<>();
     }
-    RoundRobinIterator<NetworkTank> res = iterators.get(tank);
+    TankIterator res = iterators.get(tank);
     if(res == null) {
-      res = new RoundRobinIterator<NetworkTank>(tanks);
+      res = new TankIterator();
       iterators.put(tank, res);
     }
     return res;

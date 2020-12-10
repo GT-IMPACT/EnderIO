@@ -1,28 +1,13 @@
 package crazypants.enderio.conduit.gui;
 
-import java.awt.Color;
-import java.awt.Rectangle;
-import java.util.Collections;
-import java.util.List;
-
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
-import net.minecraftforge.fluids.Fluid;
-import net.minecraftforge.fluids.FluidStack;
-
-import org.lwjgl.opengl.GL11;
-
 import com.enderio.core.client.gui.button.ColorButton;
 import com.enderio.core.client.gui.button.IconButton;
 import com.enderio.core.client.gui.button.MultiIconButton;
+import com.enderio.core.client.gui.button.ToggleButton;
 import com.enderio.core.client.gui.widget.GuiToolTip;
 import com.enderio.core.client.render.ColorUtil;
 import com.enderio.core.client.render.RenderUtil;
 import com.enderio.core.common.util.DyeColor;
-
 import crazypants.enderio.EnderIO;
 import crazypants.enderio.conduit.ConnectionMode;
 import crazypants.enderio.conduit.IConduit;
@@ -30,11 +15,23 @@ import crazypants.enderio.conduit.liquid.EnderLiquidConduit;
 import crazypants.enderio.conduit.liquid.FluidFilter;
 import crazypants.enderio.conduit.liquid.ILiquidConduit;
 import crazypants.enderio.conduit.packet.PacketExtractMode;
+import crazypants.enderio.conduit.packet.PacketRoundRobinMode;
 import crazypants.enderio.gui.IconEIO;
 import crazypants.enderio.gui.RedstoneModeButton;
 import crazypants.enderio.machine.IRedstoneModeControlable;
 import crazypants.enderio.machine.RedstoneControlMode;
 import crazypants.enderio.network.PacketHandler;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.GuiButton;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.IIcon;
+import net.minecraftforge.fluids.FluidStack;
+import org.lwjgl.opengl.GL11;
+
+import java.awt.*;
+import java.util.Collections;
+import java.util.List;
 
 public class LiquidSettings extends BaseSettingsPanel {
 
@@ -42,6 +39,7 @@ public class LiquidSettings extends BaseSettingsPanel {
 
   private static final int ID_COLOR_BUTTON = GuiExternalConnection.nextButtonId();
   private static final int ID_WHITELIST = GuiExternalConnection.nextButtonId();
+  private static final int ID_ROUND_ROBIN_BUTTON = GuiExternalConnection.nextButtonId();
 
   private static final int NEXT_FILTER_ID = 989322;
 
@@ -50,6 +48,7 @@ public class LiquidSettings extends BaseSettingsPanel {
   private final RedstoneModeButton rsB;
   private final ColorButton colorB;
   private ColorButton channelB;
+  private final ToggleButton roundRobinB;
 
   private static final String autoExtractStr = EnderIO.lang.localize("gui.conduit.fluid.autoExtract");
   private static final String filterStr = EnderIO.lang.localize("gui.conduit.fluid.filter");
@@ -75,8 +74,8 @@ public class LiquidSettings extends BaseSettingsPanel {
       eConduit = (EnderLiquidConduit) con;
       isEnder = true;
 
-      int x = gui.getXSize() - 20;
-      int y = customTop;
+      int x = gui.getXSize() - 20 - 11;
+      int y = customTop+29;
 
       inOutNextB = MultiIconButton.createRightArrowButton(gui, NEXT_FILTER_ID, x, y);
 
@@ -93,8 +92,7 @@ public class LiquidSettings extends BaseSettingsPanel {
     int x = gap + gui.getFontRenderer().getStringWidth(autoExtractStr) + gap * 2;
     int y = customTop;
 
-    if(isEnder)
-    {
+    if(isEnder) {
       channelB = new ColorButton(gui, ID_CHANNEL, x, y);
       channelB.setColorIndex(0);
       channelB.setToolTipHeading(EnderIO.lang.localize("gui.conduit.item.channel"));
@@ -123,6 +121,15 @@ public class LiquidSettings extends BaseSettingsPanel {
     colorB = new ColorButton(gui, ID_COLOR_BUTTON, x, y);
     colorB.setToolTipHeading(EnderIO.lang.localize("gui.conduit.redstone.signalColor"));
     colorB.setColorIndex(conduit.getExtractionSignalColor(gui.getDir()).ordinal());
+    if (isEnder) {
+      x += rsB.getWidth() + gap;
+      roundRobinB = new ToggleButton(gui, ID_ROUND_ROBIN_BUTTON, x, y, IconEIO.ROUND_ROBIN_OFF, IconEIO.ROUND_ROBIN);
+      roundRobinB.setSelectedToolTip(EnderIO.lang.localize("gui.conduit.item.roundRobinEnabled"));
+      roundRobinB.setUnselectedToolTip(EnderIO.lang.localize("gui.conduit.item.roundRobinDisabled"));
+      roundRobinB.setPaintSelectedBorder(false);
+    } else {
+      roundRobinB = null;
+    }
 
   }
 
@@ -138,42 +145,53 @@ public class LiquidSettings extends BaseSettingsPanel {
   @Override
   public void actionPerformed(GuiButton guiButton) {
     super.actionPerformed(guiButton);
-    if(guiButton.id == ID_COLOR_BUTTON) {
+    if (guiButton.id == ID_COLOR_BUTTON) {
       conduit.setExtractionSignalColor(gui.getDir(), DyeColor.values()[colorB.getColorIndex()]);
       PacketHandler.INSTANCE.sendToServer(new PacketExtractMode(conduit, gui.getDir()));
-    } else if(guiButton.id == ID_WHITELIST) {
+    } else if (guiButton.id == ID_WHITELIST) {
       toggleBlacklist();
-    } else if(guiButton.id == NEXT_FILTER_ID) {
+    } else if (guiButton.id == NEXT_FILTER_ID) {
       inOutShowIn = !inOutShowIn;
-      if(channelB != null) {
+      if (channelB != null) {
         channelB.onGuiInit();
-        if(isInput()) {
+        if (isInput()) {
+          if (isEnder) {
+            roundRobinB.onGuiInit();
+          }
           channelB.setColorIndex(eConduit.getInputColor(gui.getDir()).ordinal());
         } else {
+          if (isEnder) {
+            roundRobinB.detach();
+          }
           channelB.setColorIndex(eConduit.getOutputColor(gui.getDir()).ordinal());
         }
       }
-      if(isInput()) {
+      if (isInput()) {
         rsB.onGuiInit();
         colorB.onGuiInit();
       } else {
         rsB.detach();
         colorB.detach();
       }
-      if(isFilterVisible()) {
+      if (isFilterVisible()) {
         updateWhiteListButton(eConduit.getFilter(gui.getDir(), isInput()));
       }
-    } else if(guiButton.id == ID_CHANNEL) {
-      if(isEnder) {
-
+    } else if (guiButton.id == ID_CHANNEL) {
+      if (isEnder) {
         DyeColor col = DyeColor.values()[channelB.getColorIndex()];
 
-        if(isInput()) {
+        if (isInput()) {
           eConduit.setInputColor(gui.getDir(), col);
-        } else  {
+        } else {
           eConduit.setOutputColor(gui.getDir(), col);
         }
         setConduitChannel(col);
+      }
+    } else if(guiButton.id == ID_ROUND_ROBIN_BUTTON) {
+      if (isEnder && isInput()) {
+        final boolean selected = roundRobinB.isSelected();
+        eConduit.setRoundRobin(gui.getDir(), selected);
+        PacketHandler.INSTANCE.sendToServer(new PacketRoundRobinMode(eConduit, gui.getDir()));
       }
     }
   }
@@ -258,6 +276,11 @@ public class LiquidSettings extends BaseSettingsPanel {
       channelB.setColorIndex(eConduit.getOutputColor(gui.getDir()).ordinal());
     }
 
+    if(isInput()) {
+      roundRobinB.onGuiInit();
+      roundRobinB.setSelected(eConduit.isRoundRobin(gui.getDir()));
+    }
+
     if(isFilterVisible()) {
       gui.getContainer().setInventorySlotsVisible(true);
       addFilterTooltips();
@@ -290,6 +313,7 @@ public class LiquidSettings extends BaseSettingsPanel {
     rsB.detach();
     colorB.detach();
     if(isEnder) {
+
       gui.getContainer().setInventorySlotsVisible(false);
       if(filterToolTips != null) {
         for (GuiToolTip tt : filterToolTips) {
@@ -301,6 +325,7 @@ public class LiquidSettings extends BaseSettingsPanel {
       inOutNextB.detach();
       whiteListB.detach();
       channelB.detach();
+      roundRobinB.detach();
     }
   }
 
@@ -313,13 +338,6 @@ public class LiquidSettings extends BaseSettingsPanel {
       gui.getFontRenderer().drawString(autoExtractStr, left, y, ColorUtil.getRGB(Color.DARK_GRAY));
     }
     if(isEnder && isFilterVisible()) {
-
-      if(conduit.getConnectionMode(gui.getDir()) == ConnectionMode.IN_OUT) {
-        String inOutStr = inOutShowIn ? EnderIO.lang.localize("gui.conduit.ioMode.input") : EnderIO.lang.localize("gui.conduit.ioMode.output");
-        int x = gui.getGuiLeft() + gui.getXSize() - 20 - 5 - gui.getFontRenderer().getStringWidth(inOutStr);
-        int y = top;
-        gui.getFontRenderer().drawString(inOutStr, x, y, ColorUtil.getRGB(Color.DARK_GRAY));
-      }
 
       GL11.glColor3f(1, 1, 1);
       gui.bindGuiTexture(1);
@@ -346,6 +364,12 @@ public class LiquidSettings extends BaseSettingsPanel {
             renderFluid(f, x + (i * 18), y);
           }
         }
+      }
+
+      if(conduit.getConnectionMode(gui.getDir()) == ConnectionMode.IN_OUT) {
+        String inOutStr = inOutShowIn ? EnderIO.lang.localize("gui.conduit.ioMode.input") : EnderIO.lang.localize("gui.conduit.ioMode.output");
+        int j = gui.getGuiLeft() + gui.getXSize() - 20 - 5 - gui.getFontRenderer().getStringWidth(inOutStr);
+        gui.getFontRenderer().drawString(inOutStr, j - 11, top + 29, ColorUtil.getRGB(Color.DARK_GRAY));
       }
 
     }
