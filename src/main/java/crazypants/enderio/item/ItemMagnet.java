@@ -1,23 +1,11 @@
 package crazypants.enderio.item;
 
-import java.util.List;
-
-import net.minecraft.client.renderer.texture.IIconRegister;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.world.World;
 import baubles.api.BaubleType;
 import baubles.api.IBauble;
+import cofh.api.energy.IEnergyContainerItem;
 import cofh.api.energy.ItemEnergyContainer;
-
 import com.enderio.core.api.client.gui.IResourceTooltipProvider;
 import com.enderio.core.common.util.ItemUtil;
-
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Optional;
 import cpw.mods.fml.common.Optional.Method;
@@ -30,6 +18,19 @@ import crazypants.enderio.config.Config;
 import crazypants.enderio.item.darksteel.DarkSteelItems;
 import crazypants.enderio.machine.power.PowerDisplayUtil;
 import crazypants.util.BaublesUtil;
+import ic2.api.item.ElectricItem;
+import ic2.api.item.IElectricItem;
+import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.World;
+
+import java.util.List;
 
 @Optional.Interface(iface = "baubles.api.IBauble", modid = "Baubles|API")
 public class ItemMagnet extends ItemEnergyContainer implements IResourceTooltipProvider, IBauble {
@@ -37,7 +38,7 @@ public class ItemMagnet extends ItemEnergyContainer implements IResourceTooltipP
   private static final String ACTIVE_KEY = "magnetActive";
 
   public static void setActive(ItemStack item, boolean active) {
-    if(item == null) {
+    if (item == null) {
       return;
     }
     NBTTagCompound nbt = ItemUtil.getOrCreateNBT(item);
@@ -45,13 +46,13 @@ public class ItemMagnet extends ItemEnergyContainer implements IResourceTooltipP
   }
 
   public static boolean isActive(ItemStack item) {
-    if(item == null) {
+    if (item == null) {
       return false;
     }
-    if(item.stackTagCompound == null) {
+    if (item.stackTagCompound == null) {
       return false;
     }
-    if(!item.stackTagCompound.hasKey(ACTIVE_KEY)) {
+    if (!item.stackTagCompound.hasKey(ACTIVE_KEY)) {
       return false;
     }
     return item.stackTagCompound.getBoolean(ACTIVE_KEY);
@@ -111,7 +112,7 @@ public class ItemMagnet extends ItemEnergyContainer implements IResourceTooltipP
   public void addInformation(ItemStack itemStack, EntityPlayer par2EntityPlayer, List list, boolean par4) {
     super.addInformation(itemStack, par2EntityPlayer, list, par4);
     String str = PowerDisplayUtil.formatPower(getEnergyStored(itemStack)) + "/" + PowerDisplayUtil.formatPower(getMaxEnergyStored(itemStack)) + " "
-        + PowerDisplayUtil.abrevation();
+            + PowerDisplayUtil.abrevation();
     list.add(str);
   }
 
@@ -129,7 +130,7 @@ public class ItemMagnet extends ItemEnergyContainer implements IResourceTooltipP
   @Override
   public int receiveEnergy(ItemStack container, int maxReceive, boolean simulate) {
     int res = super.receiveEnergy(container, maxReceive, simulate);
-    if(res != 0 && !simulate) {
+    if (res != 0 && !simulate) {
       updateDamage(container);
     }
     return res;
@@ -153,7 +154,7 @@ public class ItemMagnet extends ItemEnergyContainer implements IResourceTooltipP
   }
 
   void setEnergy(ItemStack container, int energy) {
-    if(container.stackTagCompound == null) {
+    if (container.stackTagCompound == null) {
       container.stackTagCompound = new NBTTagCompound();
     }
     container.stackTagCompound.setInteger("Energy", energy);
@@ -172,9 +173,10 @@ public class ItemMagnet extends ItemEnergyContainer implements IResourceTooltipP
 
   @Override
   public ItemStack onItemRightClick(ItemStack equipped, World world, EntityPlayer player) {
-    if(player.isSneaking()) {
+    if (player.isSneaking()) {
       setActive(equipped, !isActive(equipped));
     }
+    chargeFromArmor(equipped, player);
     return equipped;
   }
 
@@ -199,10 +201,10 @@ public class ItemMagnet extends ItemEnergyContainer implements IResourceTooltipP
   public void onWornTick(ItemStack itemstack, EntityLivingBase player) {
     if (player instanceof EntityPlayer && isActive(itemstack) && hasPower(itemstack) && ((EntityPlayer) player).getHealth() > 0f) {
       controller.doHoover((EntityPlayer) player);
-      if(!player.worldObj.isRemote && player.worldObj.getTotalWorldTime() % 20 == 0) {
+      if (!player.worldObj.isRemote && player.worldObj.getTotalWorldTime() % 20 == 0) {
         ItemMagnet.drainPerSecondPower(itemstack);
         IInventory baubles = BaublesUtil.instance().getBaubles((EntityPlayer) player);
-        if(baubles != null) {
+        if (baubles != null) {
           baubles.markDirty();
         }
       }
@@ -227,4 +229,27 @@ public class ItemMagnet extends ItemEnergyContainer implements IResourceTooltipP
     return true;
   }
 
+    public void chargeFromArmor(ItemStack aStack, EntityPlayer aPlayer) {
+
+        ItemStack tArmor = aPlayer.getCurrentArmor(2);
+        if (tArmor != null && tArmor.getItem() instanceof IElectricItem) {
+
+            IElectricItem tArmorItem = (IElectricItem) tArmor.getItem();
+            if (tArmorItem.canProvideEnergy(tArmor)) {
+
+                IEnergyContainerItem chargable = (IEnergyContainerItem) aStack.getItem();
+                int max = chargable.getMaxEnergyStored(aStack);
+                int cur = chargable.getEnergyStored(aStack);
+                if (cur < max) {
+
+                    int canUse = Math.max(max - cur, 0);
+                    if (canUse > Config.magnetPowerCapacityRF) canUse = Config.magnetPowerCapacityRF - cur;
+
+                    int tCharge = (int) ElectricItem.manager.discharge(tArmor, (canUse / 4D), Integer.MAX_VALUE, true, true, false);
+                    if (tCharge > 0)
+                      setEnergy(aStack, tCharge * 4);
+                }
+            }
+        }
+    }
 }
