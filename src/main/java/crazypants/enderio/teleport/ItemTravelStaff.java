@@ -2,6 +2,9 @@ package crazypants.enderio.teleport;
 
 import java.util.List;
 
+import cofh.api.energy.IEnergyContainerItem;
+import ic2.api.item.ElectricItem;
+import ic2.api.item.IElectricItem;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
@@ -81,11 +84,37 @@ public class ItemTravelStaff extends ItemEnergyContainer implements IItemOfTrave
       return equipped;
     }
 
+    chargeFromArmor(equipped, player);
+
     if(world.isRemote) {
       TravelController.instance.activateTravelAccessable(equipped, world, player, TravelSource.STAFF);
     }
     player.swingItem();
     return equipped;
+  }
+
+  public void chargeFromArmor(ItemStack aStack, EntityPlayer aPlayer) {
+
+    ItemStack tArmor = aPlayer.getCurrentArmor(2);
+    if (tArmor != null && tArmor.getItem() instanceof IElectricItem) {
+
+      IElectricItem tArmorItem = (IElectricItem) tArmor.getItem();
+      if (tArmorItem.canProvideEnergy(tArmor)) {
+
+        IEnergyContainerItem chargable = (IEnergyContainerItem) aStack.getItem();
+        int max = chargable.getMaxEnergyStored(aStack);
+        int cur = chargable.getEnergyStored(aStack);
+        if (cur < max) {
+
+          int canUse = Math.max(max - cur, 0);
+          if (canUse > Config.darkSteelPowerStorageLevelTwo) canUse = Config.darkSteelPowerStorageLevelTwo - cur;
+
+          int tCharge = (int) ElectricItem.manager.discharge(tArmor, (canUse / 4D), Integer.MAX_VALUE, true, true, false);
+          if (tCharge > 0)
+            setEnergy(aStack, tCharge * 4);
+        }
+      }
+    }
   }
 
   @Override
