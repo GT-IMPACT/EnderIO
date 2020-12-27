@@ -1,22 +1,6 @@
 package crazypants.enderio.item;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import net.minecraft.command.IEntitySelector;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.item.EntityXPOrb;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.MathHelper;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
+import cpw.mods.fml.common.eventhandler.Cancelable;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.registry.GameRegistry;
@@ -25,8 +9,31 @@ import crazypants.enderio.config.Config;
 import crazypants.enderio.item.PacketMagnetState.SlotType;
 import crazypants.enderio.network.PacketHandler;
 import crazypants.util.BaublesUtil;
+import crazypants.util.ItemNBTHelper;
+import crazypants.util.Vector3;
+import net.minecraft.block.Block;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.item.EntityXPOrb;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.event.entity.item.ItemTossEvent;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import static crazypants.enderio.item.darksteel.DarkSteelItems.itemMagnet;
 import static crazypants.util.BotaniaUtil.hasSolegnoliaAround;
+import static net.minecraft.item.Item.itemRegistry;
 
 public class MagnetController {
 
@@ -34,7 +41,6 @@ public class MagnetController {
     PacketHandler.INSTANCE.registerMessage(PacketMagnetState.class, PacketMagnetState.class, PacketHandler.nextID(), Side.SERVER);
   }
 
-  
   @SubscribeEvent
   public void onPlayerTick(TickEvent.PlayerTickEvent event) {
     if (event.phase != TickEvent.Phase.END) {
@@ -42,7 +48,7 @@ public class MagnetController {
     }
     ActiveMagnet mag = getActiveMagnet(event.player);
     if (mag != null && event.player.getHealth() > 0f) {
-      doHoover(event.player);
+      doHoover(event.player, mag.item);
       if(event.side == Side.SERVER && event.player.worldObj.getTotalWorldTime() % 20 == 0) {
         ItemMagnet.drainPerSecondPower(mag.item);
         event.player.inventory.setInventorySlotContents(mag.slot, mag.item);
@@ -65,40 +71,71 @@ public class MagnetController {
   private static final double collisionDistanceSq = 1.25 * 1.25;
   private static final double speed = 0.035;
   private static final double speed4 = speed * 4;
+  
+  public void doHoover(EntityPlayer player, ItemStack stack) {
+    int cooldown = getCooldown(stack);
 
-  public void doHoover(EntityPlayer player) {
+    if(hasSolegnoliaAround(player)) {
+      if(cooldown < 0)
+        setCooldown(stack, 2);
+      return;
+    }
     
     if (blacklist == null) {
       initBlacklist();
     }
 
-    AxisAlignedBB aabb = AxisAlignedBB.getBoundingBox(
-        player.posX - Config.magnetRange, player.posY - Config.magnetRange, player.posZ - Config.magnetRange,
-        player.posX + Config.magnetRange, player.posY + Config.magnetRange, player.posZ + Config.magnetRange);
-        
-    List<Entity> interestingItems = selectEntitiesWithinAABB(player.worldObj, aabb);
+    if(cooldown <= 0) {
+      if(!player.isSneaking()) {
 
-    if (interestingItems != null) {
-      for (Entity entity : interestingItems) {
-        double x = player.posX + 0.5D - entity.posX;
-        double y = player.posY + 1D - entity.posY;
-        double z = player.posZ + 0.5D - entity.posZ;
+        double x = player.posX;
+        double y = player.posY - (player.worldObj.isRemote ? 1.62 : 0) + 0.75;
+        double z = player.posZ;
+        int range = 16;
+        List<EntityItem> items = player.worldObj.getEntitiesWithinAABB(EntityItem.class, AxisAlignedBB.getBoundingBox(x - range, y - range, z - range, x + range, y + range, z + range));
+        int pulled = 0;
+        for(EntityItem item : items)
+          if(canPullItem(item)) {
 
-        double distance = x * x + y * y + z * z;
-        if (distance < collisionDistanceSq) {
-          entity.onCollideWithPlayer(player);
-        } else {
-          double distancespeed = speed4 / distance;
-          entity.motionX += x * distancespeed;
-          if (y > 0) {
-            entity.motionY = 0.12;
-          } else {
-            entity.motionY += y * speed;
+            if(pulled > 200)
+              break;
+
+            setEntityMotionFromVector(item, new Vector3(x, y, z), 0.45F);
+            pulled++;
           }
-          entity.motionZ += z * distancespeed;
-        }
       }
-    }
+    } else setCooldown(stack, cooldown - 1);
+  }
+
+  public static void setEntityMotionFromVector(Entity entity, Vector3 originalPosVector, float modifier) {
+    Vector3 entityVector = Vector3.fromEntityCenter(entity);
+    Vector3 finalVector = originalPosVector.copy().subtract(entityVector);
+
+    if(finalVector.mag() > 1)
+      finalVector.normalize();
+
+    entity.motionX = finalVector.x * modifier;
+    entity.motionY = finalVector.y * modifier;
+    entity.motionZ = finalVector.z * modifier;
+  }
+
+  public static int getCooldown(ItemStack stack) {
+    return ItemNBTHelper.getInt(stack, "cooldown", 0);
+  }
+
+  public static void setCooldown(ItemStack stack, int cooldown) {
+    ItemNBTHelper.setInt(stack, "cooldown", cooldown);
+  }
+
+  private boolean canPullItem(EntityItem item) {
+    if(item.isDead || hasSolegnoliaAround(item))
+      return false;
+
+    ItemStack stack = item.getEntityItem();
+    if(stack == null || blacklist.contains(itemRegistry.getNameForObject(stack.getItem())))
+      return false;
+
+    return true;
   }
 
   private static List<Item> blacklist = null;
