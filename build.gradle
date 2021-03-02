@@ -83,6 +83,8 @@ dependencies {
     compileOnly ("com.pahimar.ee3:EquivalentExchange3:${ee3_version}:dev") {
         transitive = false
     }
+
+    compile fileTree(dir: 'lib', include: '*.jar')
     
     // WAILA ships really old CCC/CCL versions, so we force the new versions
     compile "codechicken:CodeChickenLib:${minecraft_version}-${ccl_version}:dev"
