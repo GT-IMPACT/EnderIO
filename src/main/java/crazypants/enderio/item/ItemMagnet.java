@@ -175,7 +175,7 @@ public class ItemMagnet extends ItemEnergyContainer implements IResourceTooltipP
         if (player.isSneaking()) {
             setActive(equipped, !isActive(equipped));
         }
-        chargeFromArmor(equipped, player);
+        //chargeFromArmor(equipped, player);
         return equipped;
     }
 

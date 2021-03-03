@@ -84,7 +84,7 @@ public class ItemTravelStaff extends ItemEnergyContainer implements IItemOfTrave
       return equipped;
     }
 
-    chargeFromArmor(equipped, player);
+    //chargeFromArmor(equipped, player);
 
     if(world.isRemote) {
       TravelController.instance.activateTravelAccessable(equipped, world, player, TravelSource.STAFF);
